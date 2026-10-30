@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>सुरक्षा मित्र | SurakshaMitra</title>
+  <!-- Tailwind CSS via CDN for rapid styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Custom Shopfloor Accessible Styles */
+    body {
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .tap-target {
+      min-height: 68px;
+    }
+    .pulse-mic {
+      animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col justify-between">
+
+  <!-- Top App Bar -->
+  <header class="bg-blue-800 text-white shadow-lg sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-2 cursor-pointer" onclick="navigate('home')">
+        <div class="w-10 h-10 rounded-full bg-amber-400 text-blue-950 flex items-center justify-center font-black text-xl shadow">
+          🛡️
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg leading-tight tracking-wide">सुरक्षा मित्र</h1>
+          <p class="text-xs text-blue-200">SurakshaMitra Companion</p>
+        </div>
+      </div>
+
+      <!-- Language Switcher & Role Toggle -->
+      <div class="flex items-center space-x-2">
+        <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-blue-900 border border-blue-400 text-white font-bold text-sm rounded-lg px-2 py-1.5 focus:outline-none">
+          <option value="mr">🇮🇳 मराठी</option>
+          <option value="hi">🇮🇳 हिंदी</option>
+          <option value="en">🌐 English</option>
+        </select>
+        <button onclick="toggleRole()" id="roleBadge" class="bg-amber-400 text-blue-950 px-2 py-1.5 rounded-lg text-xs font-bold border border-amber-300">
+          कामगार
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Dynamic View Container -->
+  <main id="appContainer" class="max-w-md mx-auto w-full p-4 flex-1">
+    <!-- Screens are dynamically rendered here -->
+  </main>
+
+  <!-- Bottom Navigation (Touch-Friendly Big Icons) -->
+  <nav class="bg-white border-t border-slate-300 sticky bottom-0 z-50 shadow-2xl py-2">
+    <div class="max-w-md mx-auto grid grid-cols-4 gap-1 px-2 text-center">
+      <button onclick="navigate('home')" class="nav-btn flex flex-col items-center py-1 text-blue-800 font-bold focus:outline-none">
+        <i class="fa-solid fa-house text-2xl mb-1"></i>
+        <span class="text-xs" data-i18n="nav_home">मुख्य</span>
+      </button>
+      <button onclick="navigate('safety')" class="nav-btn flex flex-col items-center py-1 text-slate-500 font-bold focus:outline-none">
+        <i class="fa-solid fa-helmet-safety text-2xl mb-1 text-amber-500"></i>
+        <span class="text-xs" data-i18n="nav_safety">सुरक्षा</span>
+      </button>
+      <button onclick="navigate('voice')" class="nav-btn flex flex-col items-center py-1 text-slate-500 font-bold focus:outline-none">
+        <div class="w-10 h-10 -mt-5 bg-red-600 rounded-full flex items-center justify-center text-white shadow-xl">
+          <i class="fa-solid fa-microphone text-xl"></i>
+        </div>
+        <span class="text-xs mt-1" data-i18n="nav_ask">सवाल्</span>
+      </button>
+      <button onclick="navigate('shifts')" class="nav-btn flex flex-col items-center py-1 text-slate-500 font-bold focus:outline-none">
+        <i class="fa-solid fa-clock-rotate-left text-2xl mb-1 text-green-600"></i>
+        <span class="text-xs" data-i18n="nav_wages">पगार/शिफ्ट</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    // --- 1. MULTILINGUAL TRANSLATION DICTIONARY ---
+    const i18n = {
+      mr: {
+        nav_home: "मुख्य पृष्ठ",
+        nav_safety: "सुरक्षा व्हिडिओ",
+        nav_ask: "बोलून विचारा",
+        nav_wages: "पगार/शिफ्ट",
+        role_worker: "कामगार",
+        role_supervisor: "सुपरवायझर",
+        welcome_title: "नमस्कार बंधू/भगिनी!",
+        welcome_sub: "सुरक्षा नियमांचे पालन करा आणि सुरक्षित घरी परता.",
+        card_safety: "सुरक्षा व्हिडिओ शिका",
+        card_safety_desc: "मशिन सुरक्षित चालवण्याची सोपी माहिती",
+        card_voice: "माईकवर प्रश्न विचारा",
+        card_voice_desc: "मराठीत बोला, लगेच उत्तर मिळवा",
+        card_shifts: "शिफ्ट आणि पगार",
+        card_shifts_desc: "आजची वेळ आणि खात्याची माहिती",
+        card_feedback: "अभिप्राय नोंदवा",
+        card_feedback_desc: "मशिन किंवा सुरक्षेची अडचण सांगा",
+        mic_instruction: "लाल बटण दाबा आणि तुमचा प्रश्न स्पष्टपणे बोला",
+        mic_listening: "आम्ही ऐकत आहोत... बोला!",
+        mic_btn_speak: "प्रश्न विचारा",
+        quiz_title: "सुरक्षा पडताळणी चाचणी",
+        correct_answer: "शाब्बास! बरोबर उत्तर आहे.",
+        wrong_answer: "चुकीचे उत्तर! कृपया पुन्हा नियम पहा.",
+        next_step: "पुढील पायरी",
+        understood_btn: "होय, मी समजलो 👍",
+        shift_today: "आजची शिफ्ट: सकाळी ७:०० ते दुपारी ३:००",
+        wage_today: "आजचे वेतन दर: ₹५५० / दिवस",
+        overtime_rate: "ओव्हरटाईम: ₹९५ प्रति तास",
+        admin_title: "सुरक्षा अधिकारी डॅशबोर्ड",
+        admin_confusion_stat: "कामगारांना सर्वाधिक कठीण गेलेल्या पायऱ्या"
+      },
+      hi: {
+        nav_home: "होम",
+        nav_safety: "सुरक्षा वीडियो",
+        nav_ask: "बोलकर पूछें",
+        nav_wages: "वेतन/शिफ्ट",
+        role_worker: "कारीगर",
+        role_supervisor: "सुपरवाइजर",
+        welcome_title: "नमस्ते साथी!",
+        welcome_sub: "सुरक्षा नियमों का पालन करें और सुरक्षित रहें.",
+        card_safety: "सुरक्षा वीडियो देखें",
+        card_safety_desc: "मशीन सुरक्षित चलाने की आसान गाइड",
+        card_voice: "माइक पर सवाल पूछें",
+        card_voice_desc: "अपनी भाषा में बोलें, तुरंत जवाब पाएं",
+        card_shifts: "शिफ्ट और मजदूरी",
+        card_shifts_desc: "आज की टाइमिंग और हाजिरी/पगार",
+        card_feedback: "सुझाव / फीडबैक",
+        card_feedback_desc: "मशीन की खराबी या परेशानी बताएं",
+        mic_instruction: "लाल बटन दबाएं और अपना सवाल साफ बोलें",
+        mic_listening: "हम सुन रहे हैं... बोलिए!",
+        mic_btn_speak: "सवाल पूछें",
+        quiz_title: "सुरक्षा समझ जांच",
+        correct_answer: "बहुत खूब! बिल्कुल सही जवाब.",
+        wrong_answer: "गलत जवाब! कृपया सही तरीका दोबारा देखें.",
+        next_step: "अगला कदम",
+        understood_btn: "हाँ, मैंने समझ लिया 👍",
+        shift_today: "आज की शिफ्ट: सुबह 7:00 से दोपहर 3:00",
+        wage_today: "दैनिक मजदूरी दर: ₹550 / दिन",
+        overtime_rate: "ओवरटाइम दर: ₹95 प्रति घंटा",
+        admin_title: "सुरक्षा अधिकारी डैशबोर्ड",
+        admin_confusion_stat: "सबसे ज्यादा गलत उत्तर वाले सुरक्षा कदम"
+      },
+      en: {
+        nav_home: "Home",
+        nav_safety: "Safety",
+        nav_ask: "Voice Query",
+        nav_wages: "Shifts/Wages",
+        role_worker: "Worker",
+        role_supervisor: "Supervisor",
+        welcome_title: "Welcome Brother!",
+        welcome_sub: "Follow safety guidelines and work safe.",
+        card_safety: "Safety Instructions",
+        card_safety_desc: "Step-by-step visual machine procedures",
+        card_voice: "Voice Query Assistant",
+        card_voice_desc: "Ask any doubt in your language",
+        card_shifts: "Shift & Wage Info",
+        card_shifts_desc: "Today's shift timing and daily wages",
+        card_feedback: "Worker Feedback",
+        card_feedback_desc: "Report issues directly to safety reps",
+        mic_instruction: "Tap red button and speak your query clearly",
+        mic_listening: "Listening now... Please speak!",
+        mic_btn_speak: "Ask Question",
+        quiz_title: "Safety Understanding Check",
+        correct_answer: "Well done! Correct procedure.",
+        wrong_answer: "Incorrect! Please check safety rule again.",
+        next_step: "Next Step",
+        understood_btn: "Yes, I Understood 👍",
+        shift_today: "Today's Shift: 7:00 AM – 3:00 PM",
+        wage_today: "Daily Wage Rate: ₹550 / Day",
+        overtime_rate: "Overtime Rate: ₹95 per Hour",
+        admin_title: "Safety Officer Dashboard",
+        admin_confusion_stat: "Top Procedural Confusion Points"
+      }
+    };
+
+    // --- 2. SAFETY PROCEDURES DATA ---
+    const procedures = [
+      {
+        id: "loom_1",
+        title: {
+          mr: "कापड लूम (Weaving Loom) सुरू करताना",
+          hi: "कपड़ा लूम (Weaving Loom) चालू करने की विधि",
+          en: "Weaving Loom Startup Safety"
+        },
+        machineImg: "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=600&auto=format&fit=crop&q=60",
+        steps: [
+          {
+            stepNum: 1,
+            title: { mr: "सुरक्षा हातमोजे आणि गॉगल घाला", hi: "सुरक्षा दस्ताने और चश्मा पहनें", en: "Wear safety gloves & eye protection" },
+            desc: {
+              mr: "काम सुरू करण्यापूर्वी कोणतेही सैल कपडे किंवा दागिने घालू नका. जाड हातमोजे वापरा.",
+              hi: "काम शुरू करने से पहले ढीले कपड़े न पहनें. सुरक्षा दस्ताने और चश्मा लगाएं.",
+              en: "Do not wear loose clothes or rings. Always put on safety gloves."
+            },
+            img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&auto=format&fit=crop&q=60",
+            quiz: {
+              question: {
+                mr: "मशिनला हात लावण्यापूर्वी हातामध्ये काय असणे आवश्यक आहे?",
+                hi: "मशीन शुरू करने से पहले हाथों में क्या होना अनिवार्य है?",
+                en: "What must you wear on your hands before starting?"
+              },
+              options: [
+                { img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&auto=format&fit=crop&q=60", label: "हातमोजे (Gloves)", correct: true },
+                { img: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=300&auto=format&fit=crop&q=60", label: "अंगठी/कडा (Ring/Bangle)", correct: false },
+                { img: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300&auto=format&fit=crop&q=60", label: "चप्पल (Slippers)", correct: false }
+              ]
+            }
+          },
+          {
+            stepNum: 2,
+            title: { mr: "मुख्य पॉवर स्विच तपासा", hi: "मेन पावर स्विच चेक करें", en: "Inspect & Switch On Main Power" },
+            desc: {
+              mr: "वायरिंग ओली नाही ना याची खात्री करा. कोरड्या हाताने हिरवे बटण दाबा.",
+              hi: "चेक करें तार गीले तो नहीं हैं. सूखे हाथों से हरा स्विच दबाएं.",
+              en: "Ensure wires are completely dry. Press the green start button with dry hands."
+            },
+            img: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&auto=format&fit=crop&q=60",
+            quiz: {
+              question: {
+                mr: "मशिन सुरू करण्यासाठी कोणते बटण दाबावे?",
+                hi: "मशीन शुरू करने के लिए कौन सा बटन दबाना है?",
+                en: "Which button starts the machine safely?"
+              },
+              options: [
+                { img: "https://placehold.co/300x300/16a34a/ffffff?text=GREEN+START", label: "हिरवे बटण (Green Start)", correct: true },
+                { img: "https://placehold.co/300x300/dc2626/ffffff?text=RED+STOP", label: "लाल बटण (Red Stop)", correct: false }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        id: "press_2",
+        title: {
+          mr: "मेटल कटिंग व स्टॅम्पिंग प्रेस",
+          hi: "शीट मेटल कटिंग प्रेस सुरक्षा",
+          en: "Sheet Metal Press Operation"
+        },
+        machineImg: "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=600&auto=format&fit=crop&q=60",
+        steps: [
+          {
+            stepNum: 1,
+            title: { mr: "इमर्जन्सी स्टॉप स्विचची तपासणी", hi: "आपातकालीन लाल स्विच की जांच", en: "Test Emergency Stop Switch" },
+            desc: {
+              mr: "काम सुरू करण्यापूर्वी लाल आपत्कालीन बटण दाबून मशिन त्वरित थांबते का ते तपासा.",
+              hi: "काम से पहले बड़ा लाल बटन दबाकर देखें कि मशीन तुरंत रुकती है या नहीं.",
+              en: "Verify the large red emergency stop button immediately kills the machine power."
+            },
+            img: "https://placehold.co/600x350/dc2626/ffffff?text=EMERGENCY+STOP+BUTTON",
+            quiz: {
+              question: {
+                mr: "अचानक अपघात घडल्यास त्वरित काय दाबाल?",
+                hi: "अचानक खतरा होने पर तुरंत क्या दबाएंगे?",
+                en: "What should you press immediately during an emergency?"
+              },
+              options: [
+                { img: "https://placehold.co/300x300/dc2626/ffffff?text=EMERGENCY+STOP", label: "इमर्जन्सी स्टॉप", correct: true },
+                { img: "https://placehold.co/300x300/2563eb/ffffff?text=SPEED+BUTTON", label: "स्पीड बटन", correct: false }
+              ]
+            }
+          }
+        ]
+      }
+    ];
+
+    // --- 3. APP STATE ---
+    let currentLang = 'mr';
+    let currentRole = 'worker'; // 'worker' or 'supervisor'
+    let currentScreen = 'home';
+    let activeProcedure = procedures[0];
+    let activeStepIdx = 0;
+
+    // Track analytics in localStorage
+    let appAnalytics = JSON.parse(localStorage.getItem('suraksha_analytics')) || {
+      loom_1_step1_wrong: 4,
+      loom_1_step2_wrong: 1,
+      press_2_step1_wrong: 8,
+      acknowledgements: 12
+    };
+
+    // --- 4. AUDIO / TTS & SOUND FX HELPER ---
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel(); // Stop active speaking
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (currentLang === 'mr') utterance.lang = 'mr-IN';
+      else if (currentLang === 'hi') utterance.lang = 'hi-IN';
+      else utterance.lang = 'en-IN';
+      utterance.rate = 0.9; // Slightly slower for crisp shop-floor clarity
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function playSound(type) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'success') {
+          osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+          osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + 0.1); // A5
+          gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.35);
+        } else if (type === 'error') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(146, audioCtx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.4);
+        }
+      } catch (e) {
+        console.log("Audio FX not permitted yet without interaction");
+      }
+    }
+
+    // --- 5. NAVIGATION CONTROLLER ---
+    function navigate(screen, payload = null) {
+      currentScreen = screen;
+      window.speechSynthesis.cancel();
+      const container = document.getElementById('appContainer');
+
+      // Update Nav Buttons active state
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-blue-800');
+        btn.classList.add('text-slate-500');
+      });
+
+      if (screen === 'home') renderHomeScreen(container);
+      else if (screen === 'safety') renderSafetyListScreen(container);
+      else if (screen === 'step_view') renderStepView(container, payload);
+      else if (screen === 'quiz_view') renderQuizView(container, payload);
+      else if (screen === 'voice') renderVoiceScreen(container);
+      else if (screen === 'shifts') renderShiftScreen(container);
+      else if (screen === 'feedback') renderFeedbackScreen(container);
+      else if (screen === 'admin') renderAdminDashboard(container);
+    }
+
+    // --- 6. SCREEN RENDERERS ---
+
+    // 6.1 Home Screen
+    function renderHomeScreen(c) {
+      const t = i18n[currentLang];
+      c.innerHTML = `
+        <div class="space-y-4">
+          <!-- Welcome Audio Card -->
+          <div class="bg-gradient-to-r from-blue-700 to-indigo-900 text-white rounded-2xl p-4 shadow-md flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-extrabold">${t.welcome_title}</h2>
+              <p class="text-sm text-blue-100 mt-1">${t.welcome_sub}</p>
+            </div>
+            <button onclick="speakText('${t.welcome_title} ${t.welcome_sub}')" class="w-12 h-12 bg-amber-400 text-blue-950 rounded-full flex items-center justify-center text-xl shadow-lg active:scale-95">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+          </div>
+
+          <!-- Quick Glance: Shift Banner -->
+          <div class="bg-amber-100 border-l-4 border-amber-500 p-3 rounded-lg flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <i class="fa-solid fa-clock text-amber-600 text-xl"></i>
+              <div>
+                <p class="text-xs text-amber-800 font-bold">आजची वेळ (Today's Shift)</p>
+                <p class="text-sm font-black text-slate-800">7:00 AM - 3:00 PM</p>
+              </div>
+            </div>
+            <button onclick="speakText('${t.shift_today}')" class="text-amber-800 p-2 text-lg">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+          </div>
+
+          <!-- Giant Touch Tiles Grid -->
+          <div class="grid grid-cols-1 gap-3.5 pt-1">
+            <!-- Tile 1: Safety Videos -->
+            <button onclick="navigate('safety')" class="tap-target bg-white border-2 border-amber-300 rounded-2xl p-4 flex items-center space-x-4 shadow-sm hover:shadow active:scale-98 transition text-left">
+              <div class="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 text-3xl font-black">
+                🦺
+              </div>
+              <div class="flex-1">
+                <h3 class="text-lg font-black text-slate-900">${t.card_safety}</h3>
+                <p class="text-xs text-slate-500 font-medium">${t.card_safety_desc}</p>
+              </div>
+              <i class="fa-solid fa-chevron-right text-slate-400 text-lg"></i>
+            </button>
+
+            <!-- Tile 2: Voice Query -->
+            <button onclick="navigate('voice')" class="tap-target bg-white border-2 border-red-300 rounded-2xl p-4 flex items-center space-x-4 shadow-sm hover:shadow active:scale-98 transition text-left">
+              <div class="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center text-red-600 text-3xl font-black">
+                🎙️
+              </div>
+              <div class="flex-1">
+                <h3 class="text-lg font-black text-slate-900">${t.card_voice}</h3>
+                <p class="text-xs text-slate-500 font-medium">${t.card_voice_desc}</p>
+              </div>
+              <i class="fa-solid fa-chevron-right text-slate-400 text-lg"></i>
+            </button>
+
+            <!-- Tile 3: Shift & Wages -->
+            <button onclick="navigate('shifts')" class="tap-target bg-white border-2 border-emerald-300 rounded-2xl p-4 flex items-center space-x-4 shadow-sm hover:shadow active:scale-98 transition text-left">
+              <div class="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 text-3xl font-black
